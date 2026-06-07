@@ -32,6 +32,7 @@ IMPORTANT:
 - Use lists and spacing
 - Be concise
 - Show links clearly
+- use emojis where appropriate 
 
 PROFILE DATA:
 ${JSON.stringify(profileData, null, 2)}
