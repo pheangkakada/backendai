@@ -1,7 +1,9 @@
 import express from "express";
 import cors from "cors";
-import fetch from "node-fetch";
-import profileData from "../src/AIagent/profileData.js";
+import dotenv from "dotenv";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+dotenv.config();
 
 const app = express();
 
@@ -13,11 +15,14 @@ app.use(
   })
 );
 
+const genAI = new GoogleGenerativeAI(
+  process.env.GEMINI_API_KEY
+);
+
 app.post("/api/chat", async (req, res) => {
   try {
     const { message, profileData } = req.body;
 
-    // AI reads directly from profileData
     const prompt = `
 You are ${profileData.name} AI assistant.
 
@@ -45,29 +50,16 @@ USER QUESTION:
 ${message}
 `;
 
-    const ollamaResponse = await fetch(
-      "https://pheangkakadaportfolio.onrender.com/api/generate",
-      {
-        method: "POST",
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash",
+    });
 
-        headers: {
-          "Content-Type": "application/json",
-        },
+    const result = await model.generateContent(prompt);
 
-        body: JSON.stringify({
-          model: "phi3",
-
-          prompt,
-
-          stream: false,
-        }),
-      }
-    );
-
-    const data = await ollamaResponse.json();
+    const response = result.response.text();
 
     res.json({
-      response: data.response,
+      response,
     });
 
   } catch (error) {
@@ -79,6 +71,8 @@ ${message}
   }
 });
 
-app.listen(3001, () => {
-  console.log("Server running on port 3001");
+const PORT = process.env.PORT || 3001;
+
+app.listen(PORT, () => {
+  console.log("Server running on port", PORT);
 });
