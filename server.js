@@ -46,7 +46,7 @@ ${message}
 `;
 
     const ollamaResponse = await fetch(
-      "http://127.0.0.1:11434/api/generate",
+      "https://pheangkakadaportfolio.onrender.com/api/generate",
       {
         method: "POST",
 
