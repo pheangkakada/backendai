@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
 
 dotenv.config();
 
@@ -15,9 +15,9 @@ app.use(
   })
 );
 
-const genAI = new GoogleGenerativeAI(
-  process.env.GEMINI_API_KEY
-);
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+});
 
 app.post("/api/chat", async (req, res) => {
   try {
@@ -28,20 +28,10 @@ You are ${profileData.name} AI assistant.
 
 IMPORTANT:
 - Answer ONLY based on profileData
-- If information is not in profileData, say:
-  "I don't have information about that yet."
-- Follow all aiBehavior and rules from profileData
 - Keep answers modern and clean
-- Use lists and spacing for readability
-- Do not write long paragraphs
-- use simple english and be concise
-- Always show links clearly
-- When user asks about projects, show project details in clean list/card format with links
-- When user asks about skills, group them by frontend, backend, and tools
-- When user asks about contact, show all contact links in clean readable format
-- When user asks about you, answer professionally and clearly based on profileData
-- Always act like a helpful, modern, and professional AI assistant
-- Use emojis naturally to make answers friendly and engaging
+- Use lists and spacing
+- Be concise
+- Show links clearly
 
 PROFILE DATA:
 ${JSON.stringify(profileData, null, 2)}
@@ -50,13 +40,21 @@ USER QUESTION:
 ${message}
 `;
 
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
-    });
+    const chatCompletion =
+      await groq.chat.completions.create({
+        messages: [
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
 
-    const result = await model.generateContent(prompt);
+        model: "llama-3.3-70b-versatile",
+      });
 
-    const response = result.response.text();
+    const response =
+      chatCompletion.choices[0]?.message?.content ||
+      "No response";
 
     res.json({
       response,
@@ -66,7 +64,7 @@ ${message}
     console.error(error);
 
     res.status(500).json({
-      error: "AI failed",
+      error: error.message,
     });
   }
 });
